@@ -17,7 +17,6 @@ Welcome to my GPT-2 Implementation and Training Repository! This project showcas
 - [Training the Model](#training-the-model)
 - [Future Work](#future-work)
 - [Contributing](#contributing)
-- [License](#license)
 
 ## Introduction
 
