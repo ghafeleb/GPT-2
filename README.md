@@ -61,6 +61,13 @@ So this morning I started studying for the interview in the lab. This was not
 
 I am planning to further enhance this project by training the GPT-2 model using distributed computing. This will involve setting up a distributed environment and fine-tuning the model on a custom dataset to improve its performance and adaptability.
 
+## Future Work
+
+In the future, I plan to:
+- Implement distributed training.
+- Fine-tune the GPT-2 model on specialized datasets.
+- Explore more advanced text generation techniques.
+- Develop a web interface to interact with the model.
 
 ## Contributing
 
