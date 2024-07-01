@@ -6,7 +6,7 @@
   <em></em>
 </p>
 
-Welcome to my GPT-2 Implementation and Training Repository! This project showcases my expertise in developing and training large language models (LLMs), specifically GPT-2, using PyTorch and distributed computing. This repository is designed following <a href="https://www.youtube.com/watch?v=l8pRSuU81PU">"Let's reproduce GPT-2 (124M)"</a> by <a href="[https://www.youtube.com/watch?v=l8pRSuU81PU](https://karpathy.ai/)">Andrej Karpathy</a>.
+Welcome to my GPT-2 Implementation and Training Repository! This project showcases my expertise in developing and training large language models (LLMs), specifically GPT-2, using PyTorch and distributed computing. This repository is designed following <a href="https://www.youtube.com/watch?v=l8pRSuU81PU">"Let's reproduce GPT-2 (124M)"</a> by <a href="https://karpathy.ai/">Andrej Karpathy</a>.
 
 ## Table of Contents
 
