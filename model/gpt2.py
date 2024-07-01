@@ -4,7 +4,7 @@ from dataclasses import dataclass # Classes that store information that will be 
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-
+import math
 
 # Multi-Head Attention in One Class
 class CausalSelfAttention(nn.Module):
@@ -98,6 +98,25 @@ class GPT(nn.Module):
         ))
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
 
+    def forward(self, idx):
+        B, T = idx.size()
+        assert T <= self.config.block_size
+        # Position embedding, shape: (T, n_embd)
+        pos = torch.arange(0, T, dtype=torch.long, device=idx.device) # shape: T
+        pos_emb = self.transformer.wpe(pos)
+        # Token embedding, shape: (B, T, n_embd)
+        tok_emb = self.transformer.wte(idx)
+        x = tok_emb + pos_emb
+        # Transformer blocks
+        for block in self.transformer.h:
+            x = block(x)
+        # Final layer norm
+        x = self.transformer.ln_f(x)
+        # Classifier
+        logits = self.lm_head(x) # Shape: (B, T, vocab_size)
+        return logits
+
+
     @classmethod
     def from_pretrained(cls, model_type):
         """
@@ -131,7 +150,7 @@ class GPT(nn.Module):
         sd_keys_hf = [k for k in sd_keys_hf if not k.endswith('.attn.masked_bias')] # ignore these, just a buffer
         sd_keys_hf = [k for k in sd_keys_hf if not k.endswith('.attn.bias')] # same, just the mask (buffer)
         transposed = ['attn.c_attn.weight', 'attn.c_proj.weight', 'mlp.c_fc.weight', 'mlp.c_proj.weight']
-        
+
         assert len(sd_keys_hf) == len(sd_keys), f"mismatched keys: {len(sd_keys_hf)} != {len(sd_keys)}"
         for k in sd_keys_hf:
             if any(k.endswith(w) for w in transposed):

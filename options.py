@@ -143,6 +143,7 @@ def parse_train_args(parser):
 
 
 
+
 def parse_gpt2_train_args(parser):
     parser = parse_train_args(parser)
     #######################################################
@@ -150,6 +151,27 @@ def parse_gpt2_train_args(parser):
     #######################################################
     # parser.add_argument('--linear_reg_p', type=int, default=500,
     #                     help='linear regression p, public samples = p')
+    # parser.add_argument('--linear_reg_ratio', type=float, default=1.5,
+    #                     help='private data ratio, private_data_size = linear_reg_ratio * linear_reg_p')
+    # parser.add_argument('--semi_dp_kappa', type=float, default=0.01, help='kappa for semi dp')
+    # parser.add_argument('--pda_pdmd_constant', type=float, default=0.01)
+
+    # # code legacy reason
+    # parser.add_argument('--private_epochs', type=int, default=40,
+    #                     help='same as epochs')
+
+    return parser
+
+
+def parse_gpt2_eval_args(parser):
+    #######################################################
+    #   Important Common Arguments
+    #######################################################
+    parser.add_argument('--hf_weight', default=True, action=argparse.BooleanOptionalAction)
+    parser.add_argument('--generate_next_tokens', default=True, action=argparse.BooleanOptionalAction)
+    parser.add_argument('--num_return_sequences', type=int, default=5)
+    parser.add_argument('--max_length', type=int, default=30)
+    parser.add_argument('--prefix', type=str, default="Hello, I'm a language model,")
     # parser.add_argument('--linear_reg_ratio', type=float, default=1.5,
     #                     help='private data ratio, private_data_size = linear_reg_ratio * linear_reg_p')
     # parser.add_argument('--semi_dp_kappa', type=float, default=0.01, help='kappa for semi dp')
