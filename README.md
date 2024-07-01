@@ -1,7 +1,7 @@
 # GPT-2 Implementation and Training Repository
 
 <p align="center">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/gpt2_hf.png" width="75%" alt="GPT-2 & Hugging Face Logo"/>
+<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/gpt2_hf.PNG" width="75%" alt="GPT-2 & Hugging Face Logo"/>
   <br>
   <em></em>
 </p>
