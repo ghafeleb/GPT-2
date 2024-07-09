@@ -114,7 +114,11 @@ class GPT(nn.Module):
         x = self.transformer.ln_f(x)
         # Classifier
         logits = self.lm_head(x) # Shape: (B, T, vocab_size)
-        return logits
+        
+        loss = None
+        if targets is not None:
+            loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1))
+        return logits, loss
 
 
     @classmethod
