@@ -60,6 +60,49 @@ So this morning I started studying for the interview in the lab. This was not
 
 I am planning to further enhance this project by training the GPT-2 model using distributed computing. This will involve setting up a distributed environment and fine-tuning the model on a custom dataset to improve its performance and adaptability.
 
+### Training Data
+We use tiny Shaespeare's data to train our model. The data consists of 40,000 lines of Shakespeare from a variety of Shakespeare's plays. Download the data from <a href="https://github.com/karpathy/char-rnn/blob/master/data/tinyshakespeare/input.txt">here</a>. You can also run the following command to download it:
+```
+!wget https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt
+```
+
+#### Data Tokenization
+The first 100 characters of the data are:
+```
+First Citizen:
+Before we proceed any further, hear me speak.
+
+All:
+Speak, speak.
+
+First Citizen:
+You
+```
+Tokenization of these characters using tiktoken is a list of 31 integers:
+[5962, 22307, ..., 1639]
+
+#### Loss of Initizalied Weights for the First 128 Tokens
+The initialized weights should give an almost similar probability to every token in 50257 tokens. In other words, the cross entropy error at the first epoch of training should be close to -log(1/50257) = 10.82490511970208 where 50257 is the number of possible tokens. By computing the cross entropy loss for the first 128 tokens (128 = 4 * 32 where the number of batches = 4 and number of tokens in each batch = 32), the average error is:
+<p align="center">
+<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/initial_loss.PNG" width="75%" alt="Initial Loss"/>
+  <br>
+  <em></em>
+</p>
+
+that confirms our expectations. 
+
+#### Run Simple Training with 50 Epochs
+To train the model using tiny Shakespeare play data, run the following command:
+```
+python train_gpt2.py --lr 3e-4 --optimizer 'adam' --epochs 50
+```
+##### Important Parameters Options
+`lr`: Learning rate (default: `3e-4`).
+`optimizer`: The optimizer to use (default: `adam`).
+  - `adam`: [AdamW](https://pytorch.org/docs/stable/generated/torch.optim.AdamW.html) optimizer.
+  - `sgd`: [SGD](https://pytorch.org/docs/stable/generated/torch.optim.SGD.html) optimizer.
+`epochs`: Number of epochs for training (default: `50`)
+
 ## Future Work
 
 In the future, I plan to:
