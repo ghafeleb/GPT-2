@@ -12,11 +12,9 @@ from model.gpt2 import *
 from options import parse_gpt2_train_args, parse_gpt2_eval_args
 import tiktoken 
 import torch
+from optimizer.optimizer_entry import select_optimizer
 
-def experiment(args):
-    device = "cpu"
-    if torch.cuda.is_available() and args.device == "cuda":
-        device = "cuda" 
+def experiment(args, device):
     print(f"model_type: {args.model_type}")
     if args.hf_weight:
         model = GPT.from_pretrained(args.model_type)
@@ -85,6 +83,17 @@ def get_logits(device, x, y):
     print(logits.shape)
     print(loss)
 
+def train(args, model, x, y):
+    optimizer_f = select_optimizer(args)
+    optimizer = optimizer_f(model.parameters(), lr = args.lr)
+
+    model.train()
+    for epoch in range(args.epochs):
+        optimizer.zero_grad()
+        logits, loss = model(x, y)
+        loss.backward()
+        optimizer.step()
+        print(f"Epoch {epoch+1}, loss: {loss.item()}")
 
 def main():
     parser = argparse.ArgumentParser()
@@ -99,11 +108,12 @@ def main():
     # if torch.cuda.is_available() and args.device == "cuda":
     #     device = "cuda" 
     print(f"Running on {device}")
-    # model = experiment(args)
+    model = experiment(args, device)
     # if args.generate_next_tokens:
     #     eval_model(args, model)
     x, y = get_data_batch()
-    get_logits(device, x, y)
+    # get_logits(device, x, y)
+    train(args, model, x, y)
 
 if __name__ == '__main__':
     main()

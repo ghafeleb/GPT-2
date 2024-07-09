@@ -3,6 +3,7 @@ import os
 from model.model_entry import model_choice
 from random import randint
 import datetime
+from optimizer.optimizer_entry import optimizer_choice
 
 
 
@@ -48,10 +49,10 @@ def parse_train_args(parser):
     # #######################################################
     # #   Pretrain model arguments
     # #######################################################
-    # parser.add_argument('--pretrain_epochs', type=int, default=30,
+    # parser.add_argument('--pretrain_epochs', type=int, default=50,
     #                     help='the epochs for performing whole algorithm')
     # parser.add_argument('--pretrain_lr', type=float,
-    #                     default=1e-3, help='learning rate')
+    #                     default=3e-4, help='learning rate')
     # parser.add_argument('--pretrain_optimizer', type=str, default='adam', choices=optimizer_choice,
     #                     help='used in optimizer_entry.py')
     # parser.add_argument('--model_name', type=str,
@@ -80,8 +81,8 @@ def parse_train_args(parser):
     #                     help='target epsilon for differential privacy')
     # parser.add_argument('--delta', type=float, default=1e-6,
     #                     help='target delta for differential privacy')
-    # parser.add_argument('--epochs', type=int, default=50,
-    #                     help='the epochs for performing private training')
+    parser.add_argument('--epochs', type=int, default=50,
+                        help='the epochs for performing training')
     # parser.add_argument('--iterations', type=int, default=0,
     #                     help='the iterations for performing training')
 
@@ -95,8 +96,8 @@ def parse_train_args(parser):
     # parser.add_argument('--pub_grad_scaler', type=float, default=-1,
     #                     help='public gradient scaler')
     
-    # parser.add_argument('--optimizer', type=str, default='semi_dp', choices=optimizer_choice,
-    #                     help='used in optimizer_entry.py')
+    parser.add_argument('--optimizer', type=str, default='adam', choices=optimizer_choice,
+                        help='used in optimizer_entry.py')
 
     # parser.add_argument('--semi_dp_beta', type=float, default=0.3,
     #                     help='special hyperparmeter beta for semi dp optimizer')
@@ -116,7 +117,7 @@ def parse_train_args(parser):
     # #######################################################
     # #   LR and LR scheduler arguments
     # #######################################################
-    # parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
+    parser.add_argument('--lr', type=float, default=3e-4, help='learning rate')
     # parser.add_argument('--lr_scheduler', type=str, default='explr', choices=[
     #                     'explr', 'steplr', 'cosine', 'plateau', 'cycle'], help="learning rate scheduler")
     # parser.add_argument('--lr_scheduler_gamma', type=float, default=1,
