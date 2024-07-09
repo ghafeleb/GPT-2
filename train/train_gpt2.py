@@ -66,6 +66,26 @@ def eval_model(args, model):
     x = generate_next_token(args, model, x)
     decode_tokens(args, x)
 
+def get_data_batch():
+    enc = tiktoken.get_encoding('gpt2')
+    with open('../data/input.txt', 'r') as file:
+        text_data = file.read()
+    text_data = text_data[:1000]
+    tokens = enc.encode(text_data)
+    B, T = 4, 32
+    buf = torch.tensor(tokens[:B*T + 1])
+    x = buf[:-1].view(B, T)
+    y = buf[1:].view(B, T)
+    return x, y
+
+def get_logits(device, x, y):
+    model = GPT(GPTConfig())
+    model.to(device)
+    logits, loss = model(x, y)
+    print(logits.shape)
+    print(loss)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser = parse_gpt2_train_args(parser)
@@ -76,13 +96,14 @@ def main():
     else:
         wandb.init(project=args.project_name, config=args)
     device = "cpu"
-    if torch.cuda.is_available() and args.device == "cuda":
-        device = "cuda" 
+    # if torch.cuda.is_available() and args.device == "cuda":
+    #     device = "cuda" 
     print(f"Running on {device}")
-    model = experiment(args)
-    if args.generate_next_tokens:
-        eval_model(args, model)
-
+    # model = experiment(args)
+    # if args.generate_next_tokens:
+    #     eval_model(args, model)
+    x, y = get_data_batch()
+    get_logits(device, x, y)
 
 if __name__ == '__main__':
     main()

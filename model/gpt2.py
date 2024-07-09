@@ -98,7 +98,7 @@ class GPT(nn.Module):
         ))
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
 
-    def forward(self, idx):
+    def forward(self, idx, targets = None):
         B, T = idx.size()
         assert T <= self.config.block_size
         # Position embedding, shape: (T, n_embd)
