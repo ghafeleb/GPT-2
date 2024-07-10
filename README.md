@@ -43,7 +43,6 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 The core of this repository is the implementation of the GPT-2 model. I have created a custom GPT-2 class in PyTorch, leveraging the pre-trained GPT-2 124M model from Hugging Face. The code is structured to be modular and easy to understand.
 
 ## Text Generation Samples
-
 Here are five text completion samples for "Hello, I'm a language model," generated using the GPT-2 124M model:
 
 ```
@@ -55,6 +54,13 @@ So this morning I started studying for the interview in the lab. This was not
 >>  Hello, I'm a language model, I really like languages. I like languages because like, they're good. And the way we talk about languages
 >>  Hello, I'm a language model, a language model I'm using for data modelling. All I did was test the results and then I wrote some
 ```
+To generate samples from the pre-trained model by Hugging Face, run the following command:
+```
+cd experiment
+python generate_5_samples.py --hf_weight --no-train
+```
+
+
 
 ## Training the Model
 
