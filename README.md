@@ -99,7 +99,7 @@ To train the model using tiny Shakespeare play data, run the following command:
 ```
 By running on cuda, you can have much faster trianing. You can see the walltime of cpu vs. cuda on my device here:
 <p align="center">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/cpu_vs_gpu.png" width="75%" alt="CPU vs. GPU"/>
+<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/cpu_vs_gpu.png" width="85%" alt="CPU vs. GPU"/>
   <br>
   <em></em>
 </p>
