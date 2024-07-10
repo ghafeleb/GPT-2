@@ -94,14 +94,25 @@ that confirms our expectations.
 #### Run Simple Training with 50 Epochs
 To train the model using tiny Shakespeare play data, run the following command:
 ```
-python train_gpt2.py --lr 3e-4 --optimizer 'adam' --epochs 50
+
+!python ../train/train_gpt2.py --train --data_type super_tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
 ```
+By running on cuda, you can have much faster trianing. You can see the walltime of cpu vs. cuda on my device here:
+<p align="center">
+<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/cpu_vs_gpu.PNG" width="75%" alt="CPU vs. GPU"/>
+  <br>
+  <em></em>
+</p>
+
 ##### Important Parameters Options
+`train`: Set the model on training mode (choices: `[train, no-train]`).
+`data_type`: The dataset to be used for training (default: `super_tiny_shakespear`).
 `lr`: Learning rate (default: `3e-4`).
 `optimizer`: The optimizer to use (default: `adam`).
   - `adam`: [AdamW](https://pytorch.org/docs/stable/generated/torch.optim.AdamW.html) optimizer.
   - `sgd`: [SGD](https://pytorch.org/docs/stable/generated/torch.optim.SGD.html) optimizer.
 `epochs`: Number of epochs for training (default: `50`)
+`device`: Device on which model and data are loaded for training/evaluation (default: `cuda`). If `cuda` is not available, `cpu` will be selected.
 
 ## Future Work
 
