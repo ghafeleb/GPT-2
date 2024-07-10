@@ -43,7 +43,6 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 The core of this repository is the implementation of the GPT-2 model. I have created a custom GPT-2 class in PyTorch, leveraging the pre-trained GPT-2 124M model from Hugging Face. The code is structured to be modular and easy to understand.
 
 ## Text Generation Samples
-
 Here are five text completion samples for "Hello, I'm a language model," generated using the GPT-2 124M model:
 
 ```
@@ -55,6 +54,13 @@ So this morning I started studying for the interview in the lab. This was not
 >>  Hello, I'm a language model, I really like languages. I like languages because like, they're good. And the way we talk about languages
 >>  Hello, I'm a language model, a language model I'm using for data modelling. All I did was test the results and then I wrote some
 ```
+To generate samples from the pre-trained model by Hugging Face, run the following command:
+```
+cd experiment
+python generate_5_samples.py --hf_weight --no-train
+```
+
+
 
 ## Training the Model
 
@@ -83,8 +89,8 @@ Tokenization of these characters using tiktoken is a list of 31 integers:
 
 #### Loss of Initizalied Weights for the First 128 Tokens
 The initialized weights should give an almost similar probability to every token in 50257 tokens. In other words, the cross entropy error at the first epoch of training should be close to -log(1/50257) = 10.82490511970208 where 50257 is the number of possible tokens. By computing the cross entropy loss for the first 128 tokens (128 = 4 * 32 where the number of batches = 4 and number of tokens in each batch = 32), the average error is:
-<p align="center">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/initial_loss.PNG" width="75%" alt="Initial Loss"/>
+<p align="left">
+<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/initial_loss.png" width="50%" alt="Initial Loss"/>
   <br>
   <em></em>
 </p>
@@ -99,7 +105,7 @@ To train the model using tiny Shakespeare play data, run the following command:
 ```
 By running on cuda, you can have much faster trianing. You can see the walltime of cpu vs. cuda on my device here:
 <p align="center">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/cpu_vs_gpu.PNG" width="75%" alt="CPU vs. GPU"/>
+<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/cpu_vs_gpu.png" width="85%" alt="CPU vs. GPU"/>
   <br>
   <em></em>
 </p>
