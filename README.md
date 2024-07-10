@@ -84,7 +84,7 @@ Tokenization of these characters using tiktoken is a list of 31 integers:
 #### Loss of Initizalied Weights for the First 128 Tokens
 The initialized weights should give an almost similar probability to every token in 50257 tokens. In other words, the cross entropy error at the first epoch of training should be close to -log(1/50257) = 10.82490511970208 where 50257 is the number of possible tokens. By computing the cross entropy loss for the first 128 tokens (128 = 4 * 32 where the number of batches = 4 and number of tokens in each batch = 32), the average error is:
 <p align="left">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/initial_loss.png" width="30%" alt="Initial Loss"/>
+<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/initial_loss.png" width="50%" alt="Initial Loss"/>
   <br>
   <em></em>
 </p>
