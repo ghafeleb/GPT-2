@@ -42,6 +42,20 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 
 The core of this repository is the implementation of the GPT-2 model. I have created a custom GPT-2 class in PyTorch, leveraging the pre-trained GPT-2 124M model from Hugging Face. The code is structured to be modular and easy to understand.
 
+### Notes
+#### Note 1: Token Embedding Weights = Linear Model Head
+The weights of the token embedding are the same as the linear model head at the end of the transformer. This weight sharing scheme is added in the constructor of the GPT class:
+```
+self.transformer.wte.weight = self.lm_head.weight
+```
+
+#### Note 2: GPT-2 Initialization Scheme
+GPT-2 repo has used specific initialization for linear layers and embedding layers. To follow their steps, we have added the `_init_weights` method in our GPT class. One sample of this difference is the initialization of bias with zero values instead of uniformly at random. For LayerNorm, the initializations are similar to the default method in torch.
+
+
+#### Note 3: Residual Stream STD Growth Control
+By adding the residuals, the standard deviation of activation layer outputs increase. The accumulation of this will result in hight STD. To control this issue, we scale the outputs using 1/sqrt(n) where n is the number of layers.
+
 ## Text Generation Samples
 Here are five text completion samples for "Hello, I'm a language model," generated using the GPT-2 124M model:
 
@@ -59,8 +73,6 @@ To generate samples from the pre-trained model by Hugging Face, run the followin
 cd experiment
 python generate_5_samples.py --hf_weight --no-train
 ```
-
-
 
 ## Training the Model
 
@@ -100,8 +112,8 @@ that confirms our expectations.
 #### Run Simple Training with 50 Epochs
 To train the model using tiny Shakespeare play data, run the following command:
 ```
-
-!python ../train/train_gpt2.py --train --data_type super_tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
+cd train
+!python train_gpt2_test.py --train --data_type super_tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
 ```
 By running on cuda, you can have much faster trianing. You can see the walltime of cpu vs. cuda on my device here:
 <p align="center">
