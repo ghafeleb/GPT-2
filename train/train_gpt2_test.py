@@ -10,25 +10,37 @@ import torch
 from optimizer.optimizer_entry import select_optimizer
 from data.data_entry import get_dataset_by_type
 from data.dataloader import *
+from train_gpt2 import *
 
 
-def experiment(args, device):
-    print(f"model_type: {args.model_type}")
-    if not args.train and args.hf_weight:
-        model = GPT.from_pretrained(args.model_type)
-    else:
-        model = GPT(GPTConfig())
+def get_data_batch(args, device):
+    enc = tiktoken.get_encoding('gpt2')
+    dataset = get_dataset_by_type(args)
+    if args.data_type == 'super_tiny_shakespear':
+        dataset = dataset[:1000]
+        tokens = enc.encode(dataset)
+        B, T = 4, 32
+    buf = torch.tensor(tokens[:B*T + 1])
+    buf = buf.to(device)
+    x = buf[:-1].view(B, T)
+    y = buf[1:].view(B, T)
+    return x, y
 
-    if args.train:
-        model.train()
-    else:
-        model.eval()
-
+def get_logits(device, x, y):
+    model = GPT(GPTConfig())
     model.to(device)
-    print("Loaded model!")
-    return model
+    logits = model(x, y)
+    print(logits.shape)
 
-def train(args, model, x, y):
+def get_logits_and_loss(device, x, y):
+    model = GPT(GPTConfig())
+    model.to(device)
+    logits, loss = model(x, y)
+    print(logits.shape)
+    print(loss)
+
+
+def train_test(args, model, x, y):
     optimizer_f = select_optimizer(args)
     optimizer = optimizer_f(model.parameters(), lr = args.lr)
 
@@ -53,11 +65,9 @@ def main():
         device = "cuda" 
     print(f"Running on {device}")
     model = experiment(args, device)
-    # if args.generate_next_tokens:
-    #     eval_model(args, model)
     x, y = get_data_batch(args, device)
-    # get_logits(device, x, y)
-    train(args, model, x, y)
+    get_logits_and_loss(device, x, y)
+    train_test(args, model, x, y)
 
 if __name__ == '__main__':
     main()
