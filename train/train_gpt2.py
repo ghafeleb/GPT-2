@@ -12,7 +12,7 @@ from data.data_entry import get_dataset_by_type
 from data.dataloader import *
 
 
-def experiment(args, device):
+def get_model(args, device):
     print(f"model_type: {args.model_type}")
     if not args.train and args.hf_weight:
         model = GPT.from_pretrained(args.model_type)
@@ -52,7 +52,7 @@ def main():
     if torch.cuda.is_available() and args.device == "cuda":
         device = "cuda" 
     print(f"Running on {device}")
-    model = experiment(args, device)
+    model = get_model(args, device)
     # if args.generate_next_tokens:
     #     eval_model(args, model)
     x, y = get_data_batch(args, device)

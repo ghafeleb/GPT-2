@@ -64,7 +64,7 @@ def main():
     if torch.cuda.is_available() and args.device == "cuda":
         device = "cuda" 
     print(f"Running on {device}")
-    model = experiment(args, device)
+    model = get_model(args, device)
     if args.generate_next_tokens:
         eval_model(args, model)
 

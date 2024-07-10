@@ -64,7 +64,7 @@ def main():
     if torch.cuda.is_available() and args.device == "cuda":
         device = "cuda" 
     print(f"Running on {device}")
-    model = experiment(args, device)
+    model = get_model(args, device)
     x, y = get_data_batch(args, device)
     get_logits_and_loss(device, x, y)
     train_test(args, model, x, y)
