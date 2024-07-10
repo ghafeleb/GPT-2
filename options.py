@@ -69,8 +69,10 @@ def parse_train_args(parser):
     # parser.add_argument('--warm_start', action=argparse.BooleanOptionalAction,
     #                     help='if user want to warm-start the algorithm')
     # # common training args
-    # parser.add_argument('--batch_size', type=int, default=512,
-    #                     help="batch size used in training")
+    parser.add_argument('--batch_size', type=int, default=4,
+                        help="batch size used in training")
+    parser.add_argument('--token_size', type=int, default=32,
+                        help="token size used in training")
     # parser.add_argument('--pub_batch_size', type=int,
     #                     default=1024, help="public batch size used in training")
     # parser.add_argument('--public_private_ratio', type=float,

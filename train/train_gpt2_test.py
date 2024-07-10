@@ -40,7 +40,7 @@ def get_logits_and_loss(device, x, y):
     print(loss)
 
 
-def train_test(args, model, x, y):
+def train_simple(args, model, x, y):
     optimizer_f = select_optimizer(args)
     optimizer = optimizer_f(model.parameters(), lr = args.lr)
 
@@ -67,7 +67,7 @@ def main():
     model = get_model(args, device)
     x, y = get_data_batch(args, device)
     get_logits_and_loss(device, x, y)
-    train_test(args, model, x, y)
+    train_simple(args, model, x, y)
 
 if __name__ == '__main__':
     main()

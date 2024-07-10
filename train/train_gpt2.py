@@ -28,11 +28,17 @@ def get_model(args, device):
     print("Loaded model!")
     return model
 
-def train(args, model, x, y):
+def train(args, model, device):
+    # Optimizer
     optimizer_f = select_optimizer(args)
     optimizer = optimizer_f(model.parameters(), lr = args.lr)
 
+    # DataLoader
+    train_loader = DataLoaderLite(args)
+
     for epoch in range(args.epochs):
+        x, y = train_loader.next_batch()
+        x, y = x.to(device), y.to(device)
         optimizer.zero_grad()
         logits, loss = model(x, y)
         loss.backward()
@@ -53,11 +59,7 @@ def main():
         device = "cuda" 
     print(f"Running on {device}")
     model = get_model(args, device)
-    # if args.generate_next_tokens:
-    #     eval_model(args, model)
-    x, y = get_data_batch(args, device)
-    # get_logits(device, x, y)
-    train(args, model, x, y)
+    train(args, model, device)
 
 if __name__ == '__main__':
     main()

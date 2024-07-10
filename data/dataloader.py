@@ -4,17 +4,17 @@ import torch
 
 
 class DataLoaderLite:
-    def __init__(self, B, T, process_rank, num_processes, split):
-        self.B = B
-        self.T = T
-
-        with open('../data/input.txt', 'r') as file:
-            text = file.read()
+    def __init__(self, args):
+        self.B = args.batch_size
+        self.T = args.token_size
+        if args.data_type == 'tiny_shakespear':
+            with open('../data/input.txt', 'r') as file:
+                text = file.read()
         enc = tiktoken.get_encoding('gpt2')
         tokens = enc.encode(text)
         self.tokens = torch.tensor(tokens)
         print(f"Loaded {len(self.tokens)} tokens")
-        print(f"1 epoch = {len(self.tokens) // (B*T)} batches")
+        print(f"1 epoch = {len(self.tokens) // (self.B*self.T)} batches")
 
         # state
         self.current_position = 0
