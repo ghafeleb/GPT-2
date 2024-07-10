@@ -18,7 +18,7 @@ def parse_common_args(parser):
                         help='used in data_entry.py')
     parser.add_argument('--device', type=str, default='cuda',
                         help='choose device type: cpu, cuda, mps')
-    parser.add_argument('--seed', type=int, default=42)
+    parser.add_argument('--seed', type=int, default=1337)
     # parser.add_argument('--data_n_worker', type=int, default=0,
     #                     help='number of worker for dataloader')
 

@@ -11,6 +11,10 @@ from optimizer.optimizer_entry import select_optimizer
 from data.data_entry import get_dataset_by_type
 from data.dataloader import *
 
+def set_seed(seed):
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
 
 def get_model(args, device):
     print(f"model_type: {args.model_type}")
@@ -58,6 +62,7 @@ def main():
     if torch.cuda.is_available() and args.device == "cuda":
         device = "cuda" 
     print(f"Running on {device}")
+    set_seed(args.seed)
     model = get_model(args, device)
     train(args, model, device)
 
