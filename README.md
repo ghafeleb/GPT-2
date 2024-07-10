@@ -123,10 +123,10 @@ By running on cuda, you can have much faster trianing. You can see the walltime 
 </p>
 
 ##### Important Parameters Options
-`train`: Set the model on training mode (choices: `[train, no-train]`).
-`data_type`: The dataset to be used for training (default: `super_tiny_shakespear`).
-`lr`: Learning rate (default: `3e-4`).
-`optimizer`: The optimizer to use (default: `adam`).
+- `train`: Set the model on training mode (choices: `[train, no-train]`).
+- `data_type`: The dataset to be used for training (default: `super_tiny_shakespear`).
+- `lr`: Learning rate (default: `3e-4`).
+- `optimizer`: The optimizer to use (default: `adam`).
   - `adam`: [AdamW](https://pytorch.org/docs/stable/generated/torch.optim.AdamW.html) optimizer.
   - `sgd`: [SGD](https://pytorch.org/docs/stable/generated/torch.optim.SGD.html) optimizer.
 `epochs`: Number of epochs for training (default: `50`)
