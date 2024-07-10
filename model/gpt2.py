@@ -117,6 +117,7 @@ class GPT(nn.Module):
         
         loss = None
         if targets is not None:
+            # Flatten before loss computation to be able to use cross_entropy. Cross entropy does not like 3d data.
             loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1))
         return logits, loss
 

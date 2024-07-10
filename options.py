@@ -4,6 +4,7 @@ from model.model_entry import model_choice
 from random import randint
 import datetime
 from optimizer.optimizer_entry import optimizer_choice
+from data.data_entry import data_choice
 
 
 
@@ -13,8 +14,8 @@ def parse_common_args(parser):
     #######################################################
     parser.add_argument('--model_type', type=str, default='gpt2', choices=model_choice,
                         help='used in model_entry.py')
-    # parser.add_argument('--data_type', type=str, default='linear_reg', choices=data_choice,
-    #                     help='used in data_entry.py')
+    parser.add_argument('--data_type', type=str, default='super_tiny_shakespear', choices=data_choice,
+                        help='used in data_entry.py')
     parser.add_argument('--device', type=str, default='cuda',
                         help='choose device type: cpu, cuda, mps')
     parser.add_argument('--seed', type=int, default=42)
@@ -62,6 +63,7 @@ def parse_train_args(parser):
     # #   Train model arguments
     # #######################################################
     # # arguments trigger warm start process
+    parser.add_argument('--train', default=True, action=argparse.BooleanOptionalAction)
     # parser.add_argument('--pretrain_model', type=str,
     #                     default=None, help='path of pre_trained_model')
     # parser.add_argument('--warm_start', action=argparse.BooleanOptionalAction,

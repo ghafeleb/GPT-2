@@ -13,14 +13,20 @@ from options import parse_gpt2_train_args, parse_gpt2_eval_args
 import tiktoken 
 import torch
 from optimizer.optimizer_entry import select_optimizer
+from data.data_entry import get_dataset_by_type
 
 def experiment(args, device):
     print(f"model_type: {args.model_type}")
-    if args.hf_weight:
+    if not args.train and args.hf_weight:
         model = GPT.from_pretrained(args.model_type)
     else:
         model = GPT(GPTConfig())
-    model.eval()
+
+    if args.train:
+        model.train()
+    else:
+        model.eval()
+
     model.to(device)
     print("Loaded model!")
     return model
@@ -64,14 +70,15 @@ def eval_model(args, model):
     x = generate_next_token(args, model, x)
     decode_tokens(args, x)
 
-def get_data_batch():
+def get_data_batch(args, device):
     enc = tiktoken.get_encoding('gpt2')
-    with open('../data/input.txt', 'r') as file:
-        text_data = file.read()
-    text_data = text_data[:1000]
-    tokens = enc.encode(text_data)
-    B, T = 4, 32
+    dataset = get_dataset_by_type(args)
+    if args.data_type == 'super_tiny_shakespear':
+        dataset = dataset[:1000]
+        tokens = enc.encode(dataset)
+        B, T = 4, 32
     buf = torch.tensor(tokens[:B*T + 1])
+    buf = buf.to(device)
     x = buf[:-1].view(B, T)
     y = buf[1:].view(B, T)
     return x, y
@@ -87,7 +94,6 @@ def train(args, model, x, y):
     optimizer_f = select_optimizer(args)
     optimizer = optimizer_f(model.parameters(), lr = args.lr)
 
-    model.train()
     for epoch in range(args.epochs):
         optimizer.zero_grad()
         logits, loss = model(x, y)
@@ -105,13 +111,13 @@ def main():
     else:
         wandb.init(project=args.project_name, config=args)
     device = "cpu"
-    # if torch.cuda.is_available() and args.device == "cuda":
-    #     device = "cuda" 
+    if torch.cuda.is_available() and args.device == "cuda":
+        device = "cuda" 
     print(f"Running on {device}")
     model = experiment(args, device)
     # if args.generate_next_tokens:
     #     eval_model(args, model)
-    x, y = get_data_batch()
+    x, y = get_data_batch(args, device)
     # get_logits(device, x, y)
     train(args, model, x, y)
 
