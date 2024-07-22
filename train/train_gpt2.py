@@ -41,14 +41,15 @@ def train(args, model, device):
 
     # DataLoader
     train_loader = DataLoaderLite(args)
-
-    # torch.set_float32_matmul_precision(args.matmul_precision)
+    
+    autocast_type = torch.bfloat16 if args.autocast_type == 'bf16' else torch.float32        
     for epoch in range(args.epochs):
         t_start = time.time()
         x, y = train_loader.next_batch()
         x, y = x.to(device), y.to(device)
         optimizer.zero_grad()
-        logits, loss = model(x, y)
+        with torch.autocast(device_type=device, dtype=autocast_type):
+            logits, loss = model(x, y)
         loss.backward()
         optimizer.step()
         torch.cuda.synchronize()
