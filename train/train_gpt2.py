@@ -10,6 +10,7 @@ import torch
 from optimizer.optimizer_entry import select_optimizer
 from data.data_entry import get_dataset_by_type
 from data.dataloader import *
+import time
 
 def set_seed(seed):
     torch.manual_seed(seed)
@@ -41,13 +42,17 @@ def train(args, model, device):
     train_loader = DataLoaderLite(args)
 
     for epoch in range(args.epochs):
+        t_start = time.time()
         x, y = train_loader.next_batch()
         x, y = x.to(device), y.to(device)
         optimizer.zero_grad()
         logits, loss = model(x, y)
         loss.backward()
         optimizer.step()
-        print(f"Epoch {epoch+1}, loss: {loss.item()}")
+        torch.cuda.synchronize()
+        t_end = time.time()
+        run_time = (t_end - t_start) * 1000 # Milisecond
+        print(f"Epoch {epoch+1}, loss: {loss.item()}, Run time: {run_time:.2f} ms")
 
 def main():
     parser = argparse.ArgumentParser()
