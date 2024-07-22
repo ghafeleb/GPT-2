@@ -42,7 +42,7 @@ def train(args, model, device):
     # DataLoader
     train_loader = DataLoaderLite(args)
 
-    torch.set_float32_matmul_precision(args.matmul_precision)
+    # torch.set_float32_matmul_precision(args.matmul_precision)
     for epoch in range(args.epochs):
         t_start = time.time()
         x, y = train_loader.next_batch()
