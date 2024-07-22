@@ -134,7 +134,7 @@ cd train
 ```
 You can see the runtime per epoch in the following screenshot:
 <p align="center">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/a40_b16_t1024_runtime.png" width="85%" alt="CPU vs. GPU"/>
+<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/a40_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
   <br>
   <em></em>
 </p>
@@ -148,7 +148,7 @@ cd train
 ```
 You can see the runtime per epoch in the following screenshot:
 <p align="center">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/a40_tf32_b16_t1024_runtime.png" width="85%" alt="CPU vs. GPU"/>
+<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/a40_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
   <br>
   <em></em>
 </p>
