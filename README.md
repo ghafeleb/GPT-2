@@ -130,10 +130,10 @@ To analyze the training time of GPT-2, we use tiny Shakespeare data, batch size 
 To train the model in the default setting, run the following command:
 ```
 cd train
-!python train_gpt2_test.py --train --data_type super_tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
+!python ../train/train_gpt2.py --batch_size 16 --token_size 1024 --train --data_type tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
 ```
 You can see the runtime per epoch in the following screenshot:
-<p align="center">
+<p align="left">
 <img src="https://github.com/ghafeleb/gpt-2/blob/main/images/a40_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
   <br>
   <em></em>
@@ -144,10 +144,10 @@ As we can observe, the default runtime per epoch on my GPU (A40) is almost **125
 To train the model in the default setting, run the following command:
 ```
 cd train
-!python train_gpt2_test.py --train --data_type super_tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
+!python ../train/train_gpt2.py --matmul_precision 'high' --batch_size 16 --token_size 1024 --train --data_type tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
 ```
 You can see the runtime per epoch in the following screenshot:
-<p align="center">
+<p align="left">
 <img src="https://github.com/ghafeleb/gpt-2/blob/main/images/a40_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
   <br>
   <em></em>
