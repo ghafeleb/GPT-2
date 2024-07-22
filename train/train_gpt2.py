@@ -19,6 +19,7 @@ def set_seed(seed):
 
 def get_model(args, device):
     print(f"model_type: {args.model_type}")
+    torch.set_float32_matmul_precision(args.matmul_precision)
     if not args.train and args.hf_weight:
         model = GPT.from_pretrained(args.model_type)
     else:
@@ -41,6 +42,7 @@ def train(args, model, device):
     # DataLoader
     train_loader = DataLoaderLite(args)
 
+    torch.set_float32_matmul_precision(args.matmul_precision)
     for epoch in range(args.epochs):
         t_start = time.time()
         x, y = train_loader.next_batch()
