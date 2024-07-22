@@ -141,10 +141,10 @@ You can see the runtime per epoch in the following screenshot:
 As we can observe, the default runtime per epoch on my GPU (A40) is almost **1250** milliseconds.
 
 #### Utilizing TensorFloat32 instead of float32 for Matrix Multiplication
-To train the model in the default setting, run the following command:
+Next we train the model utilizing TF32 matrix multiplication precision. To train the model in this setting, run the following command:
 ```
 cd train
-!python ../train/train_gpt2.py --matmul_precision 'high' --batch_size 16 --token_size 1024 --train --data_type tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
+!python ../train/train_gpt2.py --batch_size 16 --token_size 1024 --train --data_type tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda --matmul_precision 'high'
 ```
 You can see the runtime per epoch in the following screenshot:
 <p align="left">
@@ -152,8 +152,22 @@ You can see the runtime per epoch in the following screenshot:
   <br>
   <em></em>
 </p>
-As we can observe, the runtime per epoch improved to almost **870** milliseconds which is **30%** improvement compared to float32. 
+As we can observe, the runtime per epoch improved to almost **870** milliseconds, which is **30%** improvement compared to the float32 default setting. 
 
+
+#### Utilizing BF16 in Mixed Precision
+Next we train the model utilizing BF16 in our mixed precision. To train the model in this setting, run the following command:
+```
+cd train
+!python ../train/train_gpt2.py --batch_size 16 --token_size 1024 --train --data_type tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda  --matmul_precision 'high' --autocast_type 'bf16'
+```
+You can see the runtime per epoch in the following screenshot:
+<p align="left">
+<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/a40_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+  <br>
+  <em></em>
+</p>
+As we can observe, the runtime per epoch improved to almost **675** milliseconds, which is **45%** improvement compared to the float32 default setting. 
 
 ##### Important Parameters Options
 - `train`: Set the model on training mode (choices: `[train, no-train]`).
