@@ -75,6 +75,8 @@ def parse_train_args(parser):
                         help="token size used in training")
     parser.add_argument('--matmul_precision', type=str, default='highest',
                         help="Precision of matrix multiplication.")
+    parser.add_argument('--autocast_type', type=str, default='f32',
+                        help="Autocast data type.")
     # parser.add_argument('--pub_batch_size', type=int,
     #                     default=1024, help="public batch size used in training")
     # parser.add_argument('--public_private_ratio', type=float,
