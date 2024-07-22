@@ -122,6 +122,39 @@ By running on cuda, you can have much faster trianing. You can see the walltime 
   <em></em>
 </p>
 
+
+### Training Speed Analysis
+To analyze the training time of GPT-2, we use tiny Shakespeare data, batch size of 16, and token size of 1024. In the following subsections, we gradually speed up the training by using different techniques.
+
+#### Default Setting Runtime
+To train the model in the default setting, run the following command:
+```
+cd train
+!python train_gpt2_test.py --train --data_type super_tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
+```
+You can see the runtime per epoch in the following screenshot:
+<p align="center">
+<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/a40_b16_t1024_runtime.png" width="85%" alt="CPU vs. GPU"/>
+  <br>
+  <em></em>
+</p>
+As we can observe, the default runtime per epoch on my GPU (A40) is almost **1250** milliseconds.
+
+#### Utilizing TensorFloat32 instead of float32 for Matrix Multiplication
+To train the model in the default setting, run the following command:
+```
+cd train
+!python train_gpt2_test.py --train --data_type super_tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
+```
+You can see the runtime per epoch in the following screenshot:
+<p align="center">
+<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/a40_tf32_b16_t1024_runtime.png" width="85%" alt="CPU vs. GPU"/>
+  <br>
+  <em></em>
+</p>
+As we can observe, the runtime per epoch improved to almost **870** milliseconds which is **30%** improvement compared to float32. 
+
+
 ##### Important Parameters Options
 - `train`: Set the model on training mode (choices: `[train, no-train]`).
 - `data_type`: The dataset to be used for training (default: `super_tiny_shakespear`).
