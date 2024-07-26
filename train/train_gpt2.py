@@ -31,6 +31,9 @@ def get_model(args, device):
         model.eval()
 
     model.to(device)
+    print(f"args.compile_model: {args.compile_model}")
+    if args.compile_model:
+        model = torch.compile(model)
     print("Loaded model!")
     return model
 
