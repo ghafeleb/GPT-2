@@ -126,6 +126,20 @@ By running on cuda, you can have much faster trianing. You can see the walltime 
 ### Training Speed Analysis
 To analyze the training time of GPT-2, we use tiny Shakespeare data, batch size of 16, and token size of 1024. In the following subsections, we gradually speed up the training by using different techniques.
 
+#### Important Parameters Options
+- `train`: Set the model on training mode (choices: `[train, no-train]`).
+- `data_type`: The dataset to be used for training (default: `super_tiny_shakespear`). `tiny_shakespear` is the complete data of the Shakespear play dataset.
+- `lr`: Learning rate (default: `3e-4`).
+- `optimizer`: The optimizer to use (default: `adam`).
+  - `adam`: [AdamW](https://pytorch.org/docs/stable/generated/torch.optim.AdamW.html) optimizer.
+  - `sgd`: [SGD](https://pytorch.org/docs/stable/generated/torch.optim.SGD.html) optimizer.
+`epochs`: Number of epochs for training (default: `50`)
+`device`: Device on which model and data are loaded for training/evaluation (default: `cuda`). If `cuda` is not available, `cpu` will be selected.
+`batch_size`: Size of the batch (default: `4`).
+`token_size`: Size of the input token (default: `32`).
+`matmul_precision`: Matrix multiplication precision of PyTorch (default: `highest`).
+`autocast_type`: Some layers defined by PyTorch change to the defined precision (default: `f32`. `f32` is the label for `float32`.).
+
 #### Default Setting Runtime
 To train the model in the default setting, run the following command:
 ```
@@ -141,10 +155,10 @@ You can see the runtime per epoch in the following screenshot:
 As we can observe, the default runtime per epoch on my GPU (A40) is almost **1250** milliseconds.
 
 #### Utilizing TensorFloat32 instead of float32 for Matrix Multiplication
-To train the model in the default setting, run the following command:
+Next we train the model utilizing TF32 matrix multiplication precision. To train the model in this setting, run the following command:
 ```
 cd train
-!python ../train/train_gpt2.py --matmul_precision 'high' --batch_size 16 --token_size 1024 --train --data_type tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
+!python ../train/train_gpt2.py --batch_size 16 --token_size 1024 --train --data_type tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda --matmul_precision 'high'
 ```
 You can see the runtime per epoch in the following screenshot:
 <p align="left">
@@ -152,18 +166,23 @@ You can see the runtime per epoch in the following screenshot:
   <br>
   <em></em>
 </p>
-As we can observe, the runtime per epoch improved to almost **870** milliseconds which is **30%** improvement compared to float32. 
+As we can observe, the runtime per epoch improved to almost **870** milliseconds, which is **30%** improvement compared to the float32 default setting. 
 
 
-##### Important Parameters Options
-- `train`: Set the model on training mode (choices: `[train, no-train]`).
-- `data_type`: The dataset to be used for training (default: `super_tiny_shakespear`).
-- `lr`: Learning rate (default: `3e-4`).
-- `optimizer`: The optimizer to use (default: `adam`).
-  - `adam`: [AdamW](https://pytorch.org/docs/stable/generated/torch.optim.AdamW.html) optimizer.
-  - `sgd`: [SGD](https://pytorch.org/docs/stable/generated/torch.optim.SGD.html) optimizer.
-`epochs`: Number of epochs for training (default: `50`)
-`device`: Device on which model and data are loaded for training/evaluation (default: `cuda`). If `cuda` is not available, `cpu` will be selected.
+#### Utilizing BF16 in Mixed Precision
+Next we train the model utilizing BF16 for the layers that PyTorch already has defined to have a mixed precision. This is called mixed precision because in data type, change is only applied to activations, and the weights are in the default type unless we modify them separately. To train the model in this setting, run the following command:
+```
+cd train
+!python ../train/train_gpt2.py --batch_size 16 --token_size 1024 --train --data_type tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda  --matmul_precision 'high' --autocast_type 'bf16'
+```
+You can see the runtime per epoch in the following screenshot:
+<p align="left">
+<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/a40_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+  <br>
+  <em></em>
+</p>
+As we can observe, the runtime per epoch improved to almost **675** milliseconds, which is **45%** improvement compared to the float32 default setting. 
+
 
 ## Future Work
 
