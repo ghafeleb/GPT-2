@@ -138,7 +138,7 @@ To analyze the training time of GPT-2, we use tiny Shakespeare data, batch size 
 `batch_size`: Size of the batch (default: `4`).
 `token_size`: Size of the input token (default: `32`).
 `matmul_precision`: Matrix multiplication precision of PyTorch (default: `highest`).
-`autocast_type`: Precision of activations/logits (default: `f32`. `f32` is the label for `float32`.).
+`autocast_type`: Some layers defined by PyTorch change to the defined precision (default: `f32`. `f32` is the label for `float32`.).
 
 #### Default Setting Runtime
 To train the model in the default setting, run the following command:
@@ -170,7 +170,7 @@ As we can observe, the runtime per epoch improved to almost **870** milliseconds
 
 
 #### Utilizing BF16 in Mixed Precision
-Next we train the model utilizing BF16 for our activations/logits to have a mixed precision. This is called mixed precision because in the the data type change is only applied to activations and the weights are in the default type unless we modify them separately. To train the model in this setting, run the following command:
+Next we train the model utilizing BF16 for the layers that PyTorch already has defined to have a mixed precision. This is called mixed precision because in data type, change is only applied to activations, and the weights are in the default type unless we modify them separately. To train the model in this setting, run the following command:
 ```
 cd train
 !python ../train/train_gpt2.py --batch_size 16 --token_size 1024 --train --data_type tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda  --matmul_precision 'high' --autocast_type 'bf16'
