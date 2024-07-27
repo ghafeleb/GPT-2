@@ -11,6 +11,8 @@ from optimizer.optimizer_entry import select_optimizer
 from data.data_entry import get_dataset_by_type
 from data.dataloader import *
 import time
+# import torch._dynamo
+# torch._dynamo.config.suppress_errors = True
 
 def set_seed(seed):
     torch.manual_seed(seed)
