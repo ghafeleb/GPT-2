@@ -30,11 +30,12 @@ To get started with this project, you'll need to have the following dependencies
 - PyTorch
 - Transformers (Hugging Face)
 - tiktoken
+- wandb
 
 You can install the required libraries using the following command:
 
 ```bash
-pip install transformers tiktoken
+pip install transformers tiktoken wandb
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 ```
 
