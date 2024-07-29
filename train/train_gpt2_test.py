@@ -11,7 +11,7 @@ from optimizer.optimizer_entry import select_optimizer
 from data.data_entry import get_dataset_by_type
 from data.dataloader import *
 from train_gpt2 import *
-
+import time
 
 def get_data_batch(args, device):
     enc = tiktoken.get_encoding('gpt2')
@@ -45,11 +45,15 @@ def train_simple(args, model, x, y):
     optimizer = optimizer_f(model.parameters(), lr = args.lr)
 
     for epoch in range(args.epochs):
+        t_start = time.time()
         optimizer.zero_grad()
         logits, loss = model(x, y)
         loss.backward()
         optimizer.step()
-        print(f"Epoch {epoch+1}, loss: {loss.item()}")
+        torch.cuda.synchronize()
+        t_end = time.time()
+        run_time = (t_end - t_start) * 1000 # Milisecond
+        print(f"Epoch {epoch+1}, loss: {loss.item()}, Run time: {run_time:.2f} ms")
 
 def main():
     parser = argparse.ArgumentParser()
