@@ -1,0 +1,9 @@
+.ipynb_checkpoints/
+.python-version
+*.pyc
+*.pyo
+.egg-info/
+.pytest_cache/
+.ruff_cache/
+wandb/
+__pycache__
