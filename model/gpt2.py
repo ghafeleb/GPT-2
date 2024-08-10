@@ -225,7 +225,7 @@ class GPT(nn.Module):
 
 class GPTFlashAttention(GPT):
     def __init__(self, config) -> None:
-        super().__init__()
+        super().__init__(config)
         self.config = config
 
         # Holds submodules in a dictionary.
