@@ -34,15 +34,12 @@ class CausalSelfAttention(nn.Module):
         q = q.view(B, T, self.n_head, C // self.n_head).transpose(1, 2) # Shape: (B, nh, T, hs)
         v = v.view(B, T, self.n_head, C // self.n_head).transpose(1, 2) # Shape: (B, nh, T, hs)
 
-        if self.flash_attention:
-            y = F.scaled_dot_product_attention(q, k, v, is_causal=True)
-        else:
-            # (B, nh, T, hs) @ (B, nh, hs, T) -> (B, nh, T, T)
-            att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
-            att = att.masked_fill(self.bias[:, :, :T, :T] == 0, float('-inf'))
-            att = F.softmax(att, dim = -1)
-            # (B, nh, T, T) @ (B, nh, T, hs) -> (B, nh, T, hs)
-            y = att @ v # Aggregate all the attentions
+        # (B, nh, T, hs) @ (B, nh, hs, T) -> (B, nh, T, T)
+        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
+        att = att.masked_fill(self.bias[:, :, :T, :T] == 0, float('-inf'))
+        att = F.softmax(att, dim = -1)
+        # (B, nh, T, T) @ (B, nh, T, hs) -> (B, nh, T, hs)
+        y = att @ v # Aggregate all the attentions
 
         # Concatenate all heads
         # contiguous changes the layout of elements in the memory. More info: https://stackoverflow.com/questions/48915810/what-does-contiguous-do-in-pytorch
@@ -93,10 +90,10 @@ class MLP(nn.Module):
 
 
 class Block(nn.Module):
-    def __init__(self, config) -> None:
+    def __init__(self, config, flash_attention=False) -> None:
         super().__init__()
         self.ln_1 = nn.LayerNorm(config.n_embd)
-        if config.flash_attention:
+        if flash_attention:
             self.attn = CausalSelfFlashAttention(config)
         else:
             self.attn = CausalSelfAttention(config)
@@ -226,6 +223,71 @@ class GPT(nn.Module):
         return model
 
 
+class GPTFlashAttention(GPT):
+    def __init__(self, config) -> None:
+        super().__init__()
+        self.config = config
 
+        # Holds submodules in a dictionary.
+        self.transformer = nn.ModuleDict(dict(
+            wte = nn.Embedding(config.vocab_size, config.n_embd), # nn.Embedding: wrapper module around the tensor
+            wpe = nn.Embedding(config.block_size, config.n_embd),
+            h = nn.ModuleList([Block(config, flash_attention=True) for i in range(config.n_layer)]), # ModuleList allows indexing layers in it
+            ln_f = nn.LayerNorm(config.n_embd),
+        ))
+        self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
 
+        # weight sharing scheme
+        self.transformer.wte.weight = self.lm_head.weight
 
+        # init params
+        self.apply(self._init_weights)
+
+    @classmethod
+    def from_pretrained(cls, model_type):
+        """
+            Load the pretrained parameters of GPT2 from huggingface
+        """
+        from transformers import GPT2LMHeadModel
+        print("Loading weights from the pretrained GPT-2 model: ", model_type)
+
+        # model_type defines the n_layer, n_head, and n_embd
+        config_args = {
+            'gpt2':         dict(n_layer=12, n_head=12, n_embd=768), # Size: 124M parameters
+            'gpt2-medium':  dict(n_layer=24, n_head=16, n_embd=1024), # Size: 350M parameters
+            'gpt2-large':   dict(n_layer=36, n_head=20, n_embd=1280), # Size: 774M parameters
+            'gpt2-xl':      dict(n_layer=48, n_head=25, n_embd=1600), # Size: 1558M parameters
+        }[model_type]
+        config_args['vocab_size'] = 50257
+        config_args['block_size'] = 1024
+        # Create GPT model
+        config = GPTConfig(**config_args)
+        model = GPTFlashAttention(config)
+        sd = model.state_dict()
+        sd_keys = sd.keys()
+        sd_keys = [k for k in sd_keys if not k.endswith('.attn.bias')]
+
+        # Hugging Face GPT
+        model_hugging_face = GPT2LMHeadModel.from_pretrained(model_type)
+        sd_hugging_face = model_hugging_face.state_dict()
+
+        # Copy hugging face params and double check the parameters to align        
+        sd_keys_hf = sd_hugging_face.keys()
+        sd_keys_hf = [k for k in sd_keys_hf if not k.endswith('.attn.masked_bias')] # ignore these, just a buffer
+        sd_keys_hf = [k for k in sd_keys_hf if not k.endswith('.attn.bias')] # same, just the mask (buffer)
+        transposed = ['attn.c_attn.weight', 'attn.c_proj.weight', 'mlp.c_fc.weight', 'mlp.c_proj.weight']
+
+        assert len(sd_keys_hf) == len(sd_keys), f"mismatched keys: {len(sd_keys_hf)} != {len(sd_keys)}"
+        for k in sd_keys_hf:
+            if any(k.endswith(w) for w in transposed):
+                # special treatment for the Conv1D weights we need to transpose
+                assert sd_hugging_face[k].shape[::-1] == sd[k].shape
+                with torch.no_grad():
+                    sd[k].copy_(sd_hugging_face[k].t())
+            else:
+                # vanilla copy over the other parameters
+                assert sd_hugging_face[k].shape == sd[k].shape
+                with torch.no_grad():
+                    sd[k].copy_(sd_hugging_face[k])
+
+        return model

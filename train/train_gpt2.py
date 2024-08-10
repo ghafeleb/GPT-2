@@ -22,10 +22,14 @@ def set_seed(seed):
 def get_model(args, device):
     print(f"model_type: {args.model_type}")
     torch.set_float32_matmul_precision(args.matmul_precision)
-    if not args.train and args.hf_weight:
-        model = GPT.from_pretrained(args.model_type)
+    if args.flash_attention:
+        model_class = GPTFlashAttention
     else:
-        model = GPT(GPTConfig())
+        model_class = GPT
+    if not args.train and args.hf_weight:
+        model = model_class.from_pretrained(args.model_type)
+    else:
+        model = model_class(GPTConfig())
 
     if args.train:
         model.train()
