@@ -153,7 +153,8 @@ You can see the runtime per epoch in the following screenshot:
   <br>
   <em></em>
 </p>
-As we can observe, the default runtime per epoch on my GPU (H100) is almost **1250** milliseconds.
+
+As we can observe, the default runtime per epoch on my GPU (H100) is almost **400** milliseconds.
 
 #### Utilizing TensorFloat32 instead of float32 for Matrix Multiplication
 Next we train the model utilizing TF32 matrix multiplication precision. To train the model in this setting, run the following command:
@@ -167,7 +168,8 @@ You can see the runtime per epoch in the following screenshot:
   <br>
   <em></em>
 </p>
-As we can observe, the runtime per epoch improved to almost **870** milliseconds, which is **30%** improvement compared to the float32 default setting. 
+
+As we can observe, the runtime per epoch improved to almost **200** milliseconds, which is **50%** improvement compared to the float32 default setting. 
 
 
 #### Utilizing BF16 in Mixed Precision
@@ -182,7 +184,62 @@ You can see the runtime per epoch in the following screenshot:
   <br>
   <em></em>
 </p>
-As we can observe, the runtime per epoch improved to almost **675** milliseconds, which is **45%** improvement compared to the float32 default setting. 
+
+As we can observe, the runtime per epoch improved to almost **180** milliseconds, which is **55%** improvement compared to the float32 default setting. 
+
+
+#### Utilizing FlashAttention
+Next we train the model utilizing FlashAttention algorithm that is an attention algorithm designed to enhance the efficiency of Transformer models. To train the model in this setting, run the following command:
+```
+cd train
+!python ../train/train_gpt2.py --flash_attention --autocast_type 'bf16' --matmul_precision 'high' --batch_size 16 --token_size 1024 --train --data_type tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
+```
+You can see the runtime per epoch in the following screenshot:
+<p align="left">
+<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/H100_FA_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+  <br>
+  <em></em>
+</p>
+
+As we can observe, the runtime per epoch improved to almost **88** milliseconds, which is **78%** improvement compared to the default setting. 
+
+
+#### Utilizing Beautiful Numbers!
+Next, we train the model using the `vocab_size` of 50304 instead of 50257. This new vocab_size is divisible by 128 which is a power of 2. Choosing batch sizes that are multiples of 32 (a power of 2) ensures optimal synchronization among threads within a warp, leading to more efficient execution, less warp divergence, and enhanced GPU performance. A warp is a collection of threads that are executed simultaneously. To train the model in this setting, run the following command:
+```
+cd train
+!python ../train/train_gpt2.py --vocab_size 50304 --flash_attention --autocast_type 'bf16' --matmul_precision 'high' --batch_size 16 --token_size 1024 --train --data_type tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
+```
+You can see the runtime per epoch in the following screenshot:
+<p align="left">
+<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/H100_goodNum_FA_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+  <br>
+  <em></em>
+</p>
+
+As we can observe, the runtime per epoch improved to almost **58** milliseconds, which is **85%** improvement compared to the default setting. 
+
+
+#### Updating Beta Parameter for AdamW Optimizer, Adding Cosine Learning Rate Scheduler, and Employing Gradient Norm Clipping Technique
+In this step, we incorporate three changes to better align our training with the setting of GPT-2 training. For this purpose, some of the parameters are borrowed from GPT-3 paper because they were not provided in GPT-2 paper. The changes are:
+
+- Changing the `beta` parameter of the AdamW optimizer: modify the default value of `(0.9, 0.999)` to `(0.9, 0.95)`.
+- Gradient norm clipping: This technique limits the magnitude of the gradients and prevents instability in training due to their large values.
+- Cosine learning rate scheduler: It improves convergence by decreasing the learning rate, enabling the model to take smaller steps toward the minimum loss function, reducing the risk of overshooting or oscillating around the minimum.
+
+To train the model in this setting, run the following command:
+```
+cd train
+!python ../train/train_gpt2.py --lr_scheduler "cosine" --clip_grad_norm --gpt3_adam_beta --vocab_size 50304 --flash_attention --autocast_type 'bf16' --matmul_precision 'high' --batch_size 16 --token_size 1024 --train --data_type tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
+```
+You can see the runtime per epoch in the following screenshot:
+<p align="left">
+<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/H100_goodNum_FA_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+  <br>
+  <em></em>
+</p>
+
+As we can observe, the runtime does not change due to compared to the previous step.
 
 
 ## Future Work
