@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 import math
-import inspect
 
 # Multi-Head Attention in One Class
 class CausalSelfAttention(nn.Module):
@@ -21,7 +20,6 @@ class CausalSelfAttention(nn.Module):
         self.n_embd = config.n_embd
         self.register_buffer("bias", torch.tril(torch.ones(config.block_size, config.block_size))
                              .view(1, 1, config.block_size, config.block_size))
-        self.flash_attention = config.flash_attention
 
     def forward(self, x):
         # B: batch size
@@ -36,16 +34,37 @@ class CausalSelfAttention(nn.Module):
         q = q.view(B, T, self.n_head, C // self.n_head).transpose(1, 2) # Shape: (B, nh, T, hs)
         v = v.view(B, T, self.n_head, C // self.n_head).transpose(1, 2) # Shape: (B, nh, T, hs)
 
-        if self.flash_attention:            
-            # FlashAttention
-            y = F.scaled_dot_product_attention(q, k, v, is_causal=True)
-        else:
-            # (B, nh, T, hs) @ (B, nh, hs, T) -> (B, nh, T, T)
-            att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
-            att = att.masked_fill(self.bias[:, :, :T, :T] == 0, float('-inf'))
-            att = F.softmax(att, dim = -1)
-            # (B, nh, T, T) @ (B, nh, T, hs) -> (B, nh, T, hs)
-            y = att @ v # Aggregate all the attentions
+        # (B, nh, T, hs) @ (B, nh, hs, T) -> (B, nh, T, T)
+        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
+        att = att.masked_fill(self.bias[:, :, :T, :T] == 0, float('-inf'))
+        att = F.softmax(att, dim = -1)
+        # (B, nh, T, T) @ (B, nh, T, hs) -> (B, nh, T, hs)
+        y = att @ v # Aggregate all the attentions
+
+        # Concatenate all heads
+        # contiguous changes the layout of elements in the memory. More info: https://stackoverflow.com/questions/48915810/what-does-contiguous-do-in-pytorch
+        y = y.transpose(1, 2).contiguous().view(B, T, C)
+        # Output projection
+        y = self.c_proj(y)
+        return y
+
+
+class CausalSelfFlashAttention(CausalSelfAttention):
+    def forward(self, x):
+        # B: batch size
+        # T: sequence length
+        # C: embedding dimension (n_embd)
+        B, T, C = x.size()
+        # Get q, k, v
+        qkv = self.c_attn(x)
+        q, k, v = qkv.split(self.n_embd, dim=2)
+        # head size = C // n_head = n_embd // n_head
+        k = k.view(B, T, self.n_head, C // self.n_head).transpose(1, 2) # Shape: (B, nh, T, hs)
+        q = q.view(B, T, self.n_head, C // self.n_head).transpose(1, 2) # Shape: (B, nh, T, hs)
+        v = v.view(B, T, self.n_head, C // self.n_head).transpose(1, 2) # Shape: (B, nh, T, hs)
+
+        # FlashAttention
+        y = F.scaled_dot_product_attention(q, k, v, is_causal=True)
 
         # Concatenate all heads
         # contiguous changes the layout of elements in the memory. More info: https://stackoverflow.com/questions/48915810/what-does-contiguous-do-in-pytorch
@@ -71,10 +90,13 @@ class MLP(nn.Module):
 
 
 class Block(nn.Module):
-    def __init__(self, config) -> None:
+    def __init__(self, config, flash_attention=False) -> None:
         super().__init__()
         self.ln_1 = nn.LayerNorm(config.n_embd)
-        self.attn = CausalSelfAttention(config)
+        if flash_attention:
+            self.attn = CausalSelfFlashAttention(config)
+        else:
+            self.attn = CausalSelfAttention(config)
         self.ln_2 = nn.LayerNorm(config.n_embd)
         self.mlp = MLP(config) # Feed-Forward Network
 
@@ -88,12 +110,11 @@ class Block(nn.Module):
 
 @dataclass
 class GPTConfig:
-    block_size: int = 1024              # the maximum lenght of the sequence (# of tokens)
-    vocab_size: int = 50257             # number of tokens in the vocabulary: 50,000 BPE merges, 256 butes tokens, 1 eos token
-    n_layer: int = 12                   # Number of layers
-    n_head: int = 12                    # Number of heads
-    n_embd: int = 768                   # Dimension of embedding
-    flash_attention: bool = False       # True: Use flash attention
+    block_size: int = 1024      # the maximum lenght of the sequence (# of tokens)
+    vocab_size: int = 50257     # number of tokens in the vocabulary: 50,000 BPE merges, 256 butes tokens, 1 eos token
+    n_layer: int = 12           # Number of layers
+    n_head: int = 12            # Number of heads
+    n_embd: int = 768           # Dimension of embedding
 
 class GPT(nn.Module):
     def __init__(self, config) -> None:
@@ -108,6 +129,7 @@ class GPT(nn.Module):
             ln_f = nn.LayerNorm(config.n_embd),
         ))
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
+
         # weight sharing scheme
         self.transformer.wte.weight = self.lm_head.weight
 
@@ -200,25 +222,72 @@ class GPT(nn.Module):
 
         return model
 
-    def configure_optimizers(self, weight_decay, learning_rate, device_type):
-        # start with all of the candidate parameters (that require grad)
-        param_dict = {pn: p for pn, p in self.named_parameters()}
-        param_dict = {pn: p for pn, p in param_dict.items() if p.requires_grad}
-        # create optim groups. Any parameters that is 2D will be weight decayed, otherwise no.
-        # i.e. all weight tensors in matmuls + embeddings decay, all biases and layernorms don't.
-        decay_params = [p for n, p in param_dict.items() if p.dim() >= 2]
-        nodecay_params = [p for n, p in param_dict.items() if p.dim() < 2]
-        optim_groups = [
-            {'params': decay_params, 'weight_decay': weight_decay},
-            {'params': nodecay_params, 'weight_decay': 0.0}
-        ]
-        num_decay_params = sum(p.numel() for p in decay_params)
-        num_nodecay_params = sum(p.numel() for p in nodecay_params)
-        print(f"num decayed parameter tensors: {len(decay_params)}, with {num_decay_params:,} parameters")
-        print(f"num non-decayed parameter tensors: {len(nodecay_params)}, with {num_nodecay_params:,} parameters")
-        # Create AdamW optimizer and use the fused version if it is available
-        fused_available = 'fused' in inspect.signature(torch.optim.AdamW).parameters
-        use_fused = fused_available and device_type == "cuda"
-        print(f"using fused AdamW: {use_fused}")
-        optimizer = torch.optim.AdamW(optim_groups, lr=learning_rate, betas=(0.9, 0.95), eps=1e-8, fused=use_fused)
-        return optimizer
+
+class GPTFlashAttention(GPT):
+    def __init__(self, config) -> None:
+        super().__init__(config)
+        self.config = config
+
+        # Holds submodules in a dictionary.
+        self.transformer = nn.ModuleDict(dict(
+            wte = nn.Embedding(config.vocab_size, config.n_embd), # nn.Embedding: wrapper module around the tensor
+            wpe = nn.Embedding(config.block_size, config.n_embd),
+            h = nn.ModuleList([Block(config, flash_attention=True) for i in range(config.n_layer)]), # ModuleList allows indexing layers in it
+            ln_f = nn.LayerNorm(config.n_embd),
+        ))
+        self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
+
+        # weight sharing scheme
+        self.transformer.wte.weight = self.lm_head.weight
+
+        # init params
+        self.apply(self._init_weights)
+
+    @classmethod
+    def from_pretrained(cls, model_type):
+        """
+            Load the pretrained parameters of GPT2 from huggingface
+        """
+        from transformers import GPT2LMHeadModel
+        print("Loading weights from the pretrained GPT-2 model: ", model_type)
+
+        # model_type defines the n_layer, n_head, and n_embd
+        config_args = {
+            'gpt2':         dict(n_layer=12, n_head=12, n_embd=768), # Size: 124M parameters
+            'gpt2-medium':  dict(n_layer=24, n_head=16, n_embd=1024), # Size: 350M parameters
+            'gpt2-large':   dict(n_layer=36, n_head=20, n_embd=1280), # Size: 774M parameters
+            'gpt2-xl':      dict(n_layer=48, n_head=25, n_embd=1600), # Size: 1558M parameters
+        }[model_type]
+        config_args['vocab_size'] = 50257
+        config_args['block_size'] = 1024
+        # Create GPT model
+        config = GPTConfig(**config_args)
+        model = GPTFlashAttention(config)
+        sd = model.state_dict()
+        sd_keys = sd.keys()
+        sd_keys = [k for k in sd_keys if not k.endswith('.attn.bias')]
+
+        # Hugging Face GPT
+        model_hugging_face = GPT2LMHeadModel.from_pretrained(model_type)
+        sd_hugging_face = model_hugging_face.state_dict()
+
+        # Copy hugging face params and double check the parameters to align        
+        sd_keys_hf = sd_hugging_face.keys()
+        sd_keys_hf = [k for k in sd_keys_hf if not k.endswith('.attn.masked_bias')] # ignore these, just a buffer
+        sd_keys_hf = [k for k in sd_keys_hf if not k.endswith('.attn.bias')] # same, just the mask (buffer)
+        transposed = ['attn.c_attn.weight', 'attn.c_proj.weight', 'mlp.c_fc.weight', 'mlp.c_proj.weight']
+
+        assert len(sd_keys_hf) == len(sd_keys), f"mismatched keys: {len(sd_keys_hf)} != {len(sd_keys)}"
+        for k in sd_keys_hf:
+            if any(k.endswith(w) for w in transposed):
+                # special treatment for the Conv1D weights we need to transpose
+                assert sd_hugging_face[k].shape[::-1] == sd[k].shape
+                with torch.no_grad():
+                    sd[k].copy_(sd_hugging_face[k].t())
+            else:
+                # vanilla copy over the other parameters
+                assert sd_hugging_face[k].shape == sd[k].shape
+                with torch.no_grad():
+                    sd[k].copy_(sd_hugging_face[k])
+
+        return model

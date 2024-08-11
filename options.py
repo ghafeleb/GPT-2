@@ -71,6 +71,10 @@ def parse_train_args(parser):
     # # common training args
     parser.add_argument('--batch_size', type=int, default=4,
                         help="batch size used in training")
+    parser.add_argument('--total_batch_size', type=int, default=-1,
+                        help="total batch size used in training with gradient accumulation. -1 means no accumulation.")
+    parser.add_argument('--vocab_size', type=int, default=50257,
+                        help="Vocab size used in training")
     parser.add_argument('--token_size', type=int, default=32,
                         help="token size used in training")
     parser.add_argument('--matmul_precision', type=str, default='highest',
@@ -79,6 +83,7 @@ def parse_train_args(parser):
                         help="Autocast data type.")
     parser.add_argument('--compile_model', action='store_true', default=False, help='Compile model if True (default: False)')
     parser.add_argument('--flash_attention', action='store_true', default=False, help='Use FlashAttention if True (default: False)')
+    parser.add_argument('--clip_grad_norm', action='store_true', default=False, help='Clip the gradient norms to 1 if True (default: False)')
     # parser.add_argument('--pub_batch_size', type=int,
     #                     default=1024, help="public batch size used in training")
     # parser.add_argument('--public_private_ratio', type=float,
@@ -108,6 +113,10 @@ def parse_train_args(parser):
     
     parser.add_argument('--optimizer', type=str, default='adam', choices=optimizer_choice,
                         help='used in optimizer_entry.py')
+    parser.add_argument('--gpt3_adam_beta', action='store_true', 
+                        default=False, help='Use GPT3 beta values for AdamW if True (default: False)')
+    parser.add_argument('--gpt3_adam_parameters', action='store_true', 
+                        default=False, help='Use GPT3 parameters for AdamW if True (default: False)')
 
     # parser.add_argument('--semi_dp_beta', type=float, default=0.3,
     #                     help='special hyperparmeter beta for semi dp optimizer')
@@ -121,15 +130,21 @@ def parse_train_args(parser):
 
     # parser.add_argument('--momentum', default=0, type=float, metavar='M',
     #                     help='momentum for sgd, alpha parameter for adam')
-    # parser.add_argument('--weight_decay', default=0,
-    #                     type=float, help='weight decay (default: 0)')
+    parser.add_argument('--weight_decay', default=0.1,
+                        type=float, help='weight decay (default: 0)')
 
     # #######################################################
     # #   LR and LR scheduler arguments
     # #######################################################
     parser.add_argument('--lr', type=float, default=3e-4, help='learning rate')
-    # parser.add_argument('--lr_scheduler', type=str, default='explr', choices=[
-    #                     'explr', 'steplr', 'cosine', 'plateau', 'cycle'], help="learning rate scheduler")
+    parser.add_argument('--lr_scheduler', type=str, default='', choices=['', 
+                        'cosine'], help="learning rate scheduler")
+    parser.add_argument('--lr_scheduler_max_lr', type=float, default=6e-4,
+                        help="learning rate scheduler hyperparameters max_lr (default: 6e-4)")
+    parser.add_argument('--lr_scheduler_warmup_steps', type=float, default=10,
+                        help="learning rate warmup steps hyperparameters (default: 10)")
+    parser.add_argument('--lr_scheduler_max_steps', type=float, default=50,
+                        help="learning rate max steps hyperparameters (default: 50)")
     # parser.add_argument('--lr_scheduler_gamma', type=float, default=1,
     #                     help="learning rate scheduler hyperparameters gamma (default: 0)")
     # parser.add_argument('--lr_scheduler_step_size', type=int, default=10,
