@@ -1,3 +1,4 @@
+/pycache/*
 .ipynb_checkpoints/
 .python-version
 *.pyc
