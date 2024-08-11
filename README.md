@@ -149,11 +149,11 @@ cd train
 ```
 You can see the runtime per epoch in the following screenshot:
 <p align="left">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/a40_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/H100_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
   <br>
   <em></em>
 </p>
-As we can observe, the default runtime per epoch on my GPU (A40) is almost **1250** milliseconds.
+As we can observe, the default runtime per epoch on my GPU (H100) is almost **1250** milliseconds.
 
 #### Utilizing TensorFloat32 instead of float32 for Matrix Multiplication
 Next we train the model utilizing TF32 matrix multiplication precision. To train the model in this setting, run the following command:
@@ -163,7 +163,7 @@ cd train
 ```
 You can see the runtime per epoch in the following screenshot:
 <p align="left">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/a40_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/H100_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
   <br>
   <em></em>
 </p>
@@ -178,7 +178,7 @@ cd train
 ```
 You can see the runtime per epoch in the following screenshot:
 <p align="left">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/a40_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/H100_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
   <br>
   <em></em>
 </p>
