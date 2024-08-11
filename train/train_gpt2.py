@@ -74,6 +74,8 @@ def train(args, model, device):
             optimizer = optimizer_f(model.parameters(), lr = args.lr, betas=(0.9, 0.95), eps=1e-8)
         elif args.gpt3_adam_parameters:
             optimizer = model.configure_optimizers(weight_decay = args.weight_decay, learning_rate = args.lr, device_type = device)
+        else:
+            optimizer = optimizer_f(model.parameters(), lr = args.lr)
     else:
         optimizer = optimizer_f(model.parameters(), lr = args.lr)
 
