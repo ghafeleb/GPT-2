@@ -7,4 +7,4 @@
 .pytest_cache/
 .ruff_cache/
 wandb/
-__pycache__
+__pycache__/
