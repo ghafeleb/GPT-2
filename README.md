@@ -239,8 +239,6 @@ You can see the runtime per epoch in the following screenshot:
   <em></em>
 </p>
 
-As we can observe, the runtime does not change due to compared to the previous step.
-
 
 ## Future Work
 
