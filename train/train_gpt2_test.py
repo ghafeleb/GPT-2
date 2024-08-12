@@ -53,7 +53,7 @@ def train_simple(args, model, x, y):
         torch.cuda.synchronize()
         t_end = time.time()
         run_time = (t_end - t_start) * 1000 # Milisecond
-        print(f"Epoch {epoch+1}, loss: {loss.item()}, Run time: {run_time:.2f} ms")
+        print(f"Epoch {epoch+1}, loss: {loss.item():.4f}, Run time: {run_time:.2f} ms")
 
 def main():
     parser = argparse.ArgumentParser()
