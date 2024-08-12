@@ -254,6 +254,22 @@ You can see the runtime per epoch in the following screenshot:
   <em></em>
 </p>
 
+#### Gradient Accumulation
+In this step, we incorporate gradient accumulation into our training process. Gradient accumulation allows us to effectively simulate training with larger batch sizes by accumulating gradients over several iterations before updating the model's weights. This technique enables the use of larger effective batch sizes without increasing the actual memory footprint, which is particularly useful when working with memory-constrained environments or large-scale models. By accumulating gradients, we improve the stability of the training process and potentially enhance model performance by leveraging the benefits of larger batch sizes. 
+
+To simulate the batch size of 0.5 million, as used in the original training of the GPT-3 model, we set a total batch size of 524,288. This batch size is approximately 0.5 million and a power of two (2^19). This choice allows for optimal efficiency on GPU hardware. To train the model using gradient accumulation with this effective batch size, execute the following command:
+```
+cd train
+!python ../train/train_gpt2.py --total_batch_size 524288 --lr_scheduler "cosine" --clip_grad_norm --gpt3_adam_parameters --vocab_size 50304 --flash_attention --autocast_type 'bf16' --matmul_precision 'high' --batch_size 16 --token_size 1024 --train --data_type tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
+```
+You can see the runtime per epoch in the following screenshot:
+<p align="left">
+<img src="https://github.com/ghafeleb/GPT-2/blob/main/images/H100_gardAccum_adamWPar_goodNum_FA_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+  <br>
+  <em></em>
+</p>
+
+The runtime is larger because we are simulating much larger batch size per epoch. Notice that token/second is almost similar to the previous step.
 
 ## Future Work
 
