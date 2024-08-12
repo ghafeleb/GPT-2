@@ -11,6 +11,9 @@ from optimizer.optimizer_entry import select_optimizer
 from data.data_entry import get_dataset_by_type
 from data.dataloader import *
 import time
+from torch.distributed import init_process_group, destroy_process_group
+from torch.nn.parallel import DistributedDataParallel as DDP
+import torch.distributed as dist
 # import torch._dynamo
 # torch._dynamo.config.suppress_errors = True
 
@@ -56,17 +59,47 @@ def get_lr(args, it):
     coeff = 0.5 * (1.0 + math.cos(math.pi * decay_rate))
     return min_lr + coeff * (args.lr_scheduler_max_lr - min_lr)
 
-def get_grad_accum_steps(args):
+def get_grad_accum_steps(args, ddp_world_size, master_process):
     if args.total_batch_size != -1:
-        assert args.total_batch_size % (args.batch_size * args.token_size) == 0
-        grad_accum_steps = args.total_batch_size // (args.batch_size * args.token_size)
-        print(f"total desired batch size: {args.total_batch_size}")
-        print(f"=> calculated gradient accumulation steps: {grad_accum_steps}")
+        assert args.total_batch_size % (args.batch_size * args.token_size * ddp_world_size) == 0
+        grad_accum_steps = args.total_batch_size // (args.batch_size * args.token_size * ddp_world_size)
+        if master_process:
+            print(f"total desired batch size: {args.total_batch_size}")
+            print(f"=> calculated gradient accumulation steps: {grad_accum_steps}")
     else:
         grad_accum_steps = 1
     return grad_accum_steps
+def get_dds_setting(args):
+    # set up DDP (distributed data parallel).
+    # torchrun command sets the env variables RANK, LOCAL_RANK, and WORLD_SIZE
+    ddp = int(os.environ.get('RANK', -1)) != -1 # is this a ddp run?
+    if ddp:
+        # use of DDP atm demands CUDA, we set the device appropriately according to rank
+        assert torch.cuda.is_available(), "for now i think we need CUDA for DDP"
+        init_process_group(backend='nccl')
+        ddp_rank = int(os.environ['RANK'])
+        ddp_local_rank = int(os.environ['LOCAL_RANK'])
+        ddp_world_size = int(os.environ['WORLD_SIZE'])
+        device = f'cuda:{ddp_local_rank}'
+        torch.cuda.set_device(device)
+        master_process = ddp_rank == 0 # this process will do logging, checkpointing etc.
+    else:
+        # vanilla, non-DDP run
+        ddp_rank = 0
+        ddp_local_rank = 0
+        ddp_world_size = 1
+        master_process = True
+        # attempt to autodetect device
+        device = "cpu"
+        if torch.cuda.is_available():
+            device = "cuda"
+        elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            device = "mps"
+        print(f"using device: {device}")
+    return ddp, ddp_rank, ddp_local_rank, ddp_world_size, device, master_process
 
-def train(args, model, device):
+
+def train(args, model, ddp, ddp_rank, ddp_local_rank, ddp_world_size, device, master_process):
     # Optimizer
     optimizer_f = select_optimizer(args)
     if args.optimizer == 'adam':
@@ -79,9 +112,12 @@ def train(args, model, device):
     else:
         optimizer = optimizer_f(model.parameters(), lr = args.lr)
 
+    grad_accum_steps = get_grad_accum_steps(args, ddp_world_size, master_process)
+
+    print("GPU ", ddp_rank)
+    sys.exit(0)
     # DataLoader
     train_loader = DataLoaderLite(args)
-    grad_accum_steps = get_grad_accum_steps(args)
 
     autocast_type = torch.bfloat16 if args.autocast_type == 'bf16' else torch.float32        
     for epoch in range(args.epochs):
@@ -122,13 +158,14 @@ def main():
         wandb.init(project=args.project_name, config=args, mode="disabled")
     else:
         wandb.init(project=args.project_name, config=args)
-    device = "cpu"
-    if torch.cuda.is_available() and args.device == "cuda":
-        device = "cuda" 
+    ddp, ddp_rank, ddp_local_rank, ddp_world_size, device, master_process = get_dds_setting(args)
+    # device = "cpu"
+    # if torch.cuda.is_available() and args.device == "cuda":
+    #     device = "cuda" 
     print(f"Running on {device}")
     set_seed(args.seed)
     model = get_model(args, device)
-    train(args, model, device)
+    train(args, model, ddp, ddp_rank, ddp_local_rank, ddp_world_size, device, master_process)
 
 if __name__ == '__main__':
     main()

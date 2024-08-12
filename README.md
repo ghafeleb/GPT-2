@@ -1,7 +1,7 @@
 # GPT-2 Implementation and Training Repository
 
 <p align="center">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/gpt2_hf.PNG" width="75%" alt="GPT-2 & Hugging Face Logo"/>
+<img src="https://github.com/ghafeleb/GPT-2/blob/main/images/gpt2_hf.PNG" width="75%" alt="GPT-2 & Hugging Face Logo"/>
   <br>
   <em></em>
 </p>
@@ -116,9 +116,10 @@ To train the model using tiny Shakespeare play data, run the following command:
 cd train
 !python train_gpt2_test.py --train --data_type super_tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
 ```
-By running on cuda, you can have much faster trianing. You can see the walltime of cpu vs. cuda on my device here:
+By running on GPU (H100), you can have much faster training. You can see the runtime of GPU is almost **18X** faster than CPU:
+
 <p align="center">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/cpu_vs_gpu.png" width="85%" alt="CPU vs. GPU"/>
+<img src="https://github.com/ghafeleb/GPT-2/blob/main/images/cpu_vs_gpu.png" width="85%" alt="CPU vs. GPU"/>
   <br>
   <em></em>
 </p>
@@ -149,11 +150,12 @@ cd train
 ```
 You can see the runtime per epoch in the following screenshot:
 <p align="left">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/H100_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+<img src="https://github.com/ghafeleb/GPT-2/blob/main/images/H100_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
   <br>
   <em></em>
 </p>
-As we can observe, the default runtime per epoch on my GPU (H100) is almost **1250** milliseconds.
+
+As we can observe, the default runtime per epoch on my GPU (H100) is almost **400** milliseconds.
 
 #### Utilizing TensorFloat32 instead of float32 for Matrix Multiplication
 Next we train the model utilizing TF32 matrix multiplication precision. To train the model in this setting, run the following command:
@@ -163,11 +165,12 @@ cd train
 ```
 You can see the runtime per epoch in the following screenshot:
 <p align="left">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/H100_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+<img src="https://github.com/ghafeleb/GPT-2/blob/main/images/H100_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
   <br>
   <em></em>
 </p>
-As we can observe, the runtime per epoch improved to almost **870** milliseconds, which is **30%** improvement compared to the float32 default setting. 
+
+As we can observe, the runtime per epoch improved to almost **200** milliseconds, which is **50%** improvement compared to the float32 default setting. 
 
 
 #### Utilizing BF16 in Mixed Precision
@@ -178,12 +181,95 @@ cd train
 ```
 You can see the runtime per epoch in the following screenshot:
 <p align="left">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/H100_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+<img src="https://github.com/ghafeleb/GPT-2/blob/main/images/H100_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
   <br>
   <em></em>
 </p>
-As we can observe, the runtime per epoch improved to almost **675** milliseconds, which is **45%** improvement compared to the float32 default setting. 
 
+As we can observe, the runtime per epoch improved to almost **180** milliseconds, which is **55%** improvement compared to the float32 default setting. 
+
+
+#### Utilizing FlashAttention
+Next we train the model utilizing FlashAttention algorithm that is an attention algorithm designed to enhance the efficiency of Transformer models. To train the model in this setting, run the following command:
+```
+cd train
+!python ../train/train_gpt2.py --flash_attention --autocast_type 'bf16' --matmul_precision 'high' --batch_size 16 --token_size 1024 --train --data_type tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
+```
+You can see the runtime per epoch in the following screenshot:
+<p align="left">
+<img src="https://github.com/ghafeleb/GPT-2/blob/main/images/H100_FA_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+  <br>
+  <em></em>
+</p>
+
+As we can observe, the runtime per epoch improved to almost **88** milliseconds, which is **78%** improvement compared to the default setting. 
+
+
+#### Utilizing Beautiful Numbers!
+Next, we train the model using the `vocab_size` of 50304 instead of 50257. This new vocab_size is divisible by 128 which is a power of 2. Choosing batch sizes that are multiples of 32 (a power of 2) ensures optimal synchronization among threads within a warp, leading to more efficient execution, less warp divergence, and enhanced GPU performance. A warp is a collection of threads that are executed simultaneously. To train the model in this setting, run the following command:
+```
+cd train
+!python ../train/train_gpt2.py --vocab_size 50304 --flash_attention --autocast_type 'bf16' --matmul_precision 'high' --batch_size 16 --token_size 1024 --train --data_type tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
+```
+You can see the runtime per epoch in the following screenshot:
+<p align="left">
+<img src="https://github.com/ghafeleb/GPT-2/blob/main/images/H100_goodNum_FA_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+  <br>
+  <em></em>
+</p>
+
+As we can observe, the runtime per epoch improved to almost **58** milliseconds, which is **85%** improvement compared to the default setting. 
+
+
+#### Updating Beta Parameter for AdamW Optimizer, Adding Cosine Learning Rate Scheduler, and Employing Gradient Norm Clipping Technique
+In this step, we incorporate three changes to better align our training with the setting of GPT-2 training. For this purpose, some of the parameters are borrowed from GPT-3 paper because they were not provided in GPT-2 paper. The changes are:
+
+- Changing the `beta` parameter of the AdamW optimizer: modify the default value of `(0.9, 0.999)` to `(0.9, 0.95)`.
+- Gradient norm clipping: This technique limits the magnitude of the gradients and prevents instability in training due to their large values.
+- Cosine learning rate scheduler: It improves convergence by decreasing the learning rate, enabling the model to take smaller steps toward the minimum loss function, reducing the risk of overshooting or oscillating around the minimum.
+
+To train the model in this setting, run the following command:
+```
+cd train
+!python ../train/train_gpt2.py --lr_scheduler "cosine" --clip_grad_norm --gpt3_adam_beta --vocab_size 50304 --flash_attention --autocast_type 'bf16' --matmul_precision 'high' --batch_size 16 --token_size 1024 --train --data_type tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
+```
+You can see the runtime per epoch in the following screenshot:
+<p align="left">
+<img src="https://github.com/ghafeleb/GPT-2/blob/main/images/H100_goodNum_FA_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+  <br>
+  <em></em>
+</p>
+
+
+#### Employ GPT-3 Parameters for AdamW with the Fused Version of AdamW
+In this step, we use the parameters of AdamW optimizer from GPT-3 paper. We also use the fused version of AdamW to utilize kernel fusion for improved efficiency. To train the model in this setting, run the following command:
+```
+cd train
+!python ../train/train_gpt2.py --gpt3_adam_parameters --lr_scheduler "cosine" --clip_grad_norm --vocab_size 50304 --flash_attention --autocast_type 'bf16' --matmul_precision 'high' --batch_size 16 --token_size 1024 --train --data_type tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
+```
+You can see the runtime per epoch in the following screenshot:
+<p align="left">
+<img src="https://github.com/ghafeleb/GPT-2/blob/main/images/H100_adamWPar_goodNum_FA_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+  <br>
+  <em></em>
+</p>
+
+#### Gradient Accumulation
+In this step, we incorporate gradient accumulation into our training process. Gradient accumulation allows us to effectively simulate training with larger batch sizes by accumulating gradients over several iterations before updating the model's weights. This technique enables the use of larger effective batch sizes without increasing the actual memory footprint, which is particularly useful when working with memory-constrained environments or large-scale models. By accumulating gradients, we improve the stability of the training process and potentially enhance model performance by leveraging the benefits of larger batch sizes. 
+
+To simulate the batch size of 0.5 million, as used in the original training of the GPT-3 model, we set a total batch size of 524,288. This batch size is approximately 0.5 million and a power of two (2^19). This choice allows for optimal efficiency on GPU hardware. To train the model using gradient accumulation with this effective batch size, execute the following command:
+```
+cd train
+!python ../train/train_gpt2.py --total_batch_size 524288 --lr_scheduler "cosine" --clip_grad_norm --gpt3_adam_parameters --vocab_size 50304 --flash_attention --autocast_type 'bf16' --matmul_precision 'high' --batch_size 16 --token_size 1024 --train --data_type tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
+```
+You can see the runtime per epoch in the following screenshot:
+<p align="left">
+<img src="https://github.com/ghafeleb/GPT-2/blob/main/images/H100_gardAccum_adamWPar_goodNum_FA_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+  <br>
+  <em></em>
+</p>
+
+The runtime is larger because we are simulating much larger batch size per epoch. Notice that token/second is almost similar to the previous step.
 
 ## Future Work
 
