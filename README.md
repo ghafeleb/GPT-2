@@ -241,6 +241,20 @@ You can see the runtime per epoch in the following screenshot:
 </p>
 
 
+#### Employ GPT-3 Parameters for AdamW with the Fused Version of AdamW
+In this step, we use the parameters of AdamW optimizer from GPT-3 paper. We also use the fused version of AdamW to utilize kernel fusion for improved efficiency. To train the model in this setting, run the following command:
+```
+cd train
+!python ../train/train_gpt2.py --gpt3_adam_parameters --lr_scheduler "cosine" --clip_grad_norm --vocab_size 50304 --flash_attention --autocast_type 'bf16' --matmul_precision 'high' --batch_size 16 --token_size 1024 --train --data_type tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
+```
+You can see the runtime per epoch in the following screenshot:
+<p align="left">
+<img src="https://github.com/ghafeleb/GPT-2/blob/main/images/H100_adamWPar_goodNum_FA_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+  <br>
+  <em></em>
+</p>
+
+
 ## Future Work
 
 In the future, I plan to:
