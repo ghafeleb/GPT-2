@@ -1,7 +1,7 @@
 # GPT-2 Implementation and Training Repository
 
 <p align="center">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/gpt2_hf.PNG" width="75%" alt="GPT-2 & Hugging Face Logo"/>
+<img src="https://github.com/ghafeleb/GPT-2/blob/main/images/gpt2_hf.PNG" width="75%" alt="GPT-2 & Hugging Face Logo"/>
   <br>
   <em></em>
 </p>
@@ -103,7 +103,7 @@ Tokenization of these characters using tiktoken is a list of 31 integers:
 #### Loss of Initizalied Weights for the First 128 Tokens
 The initialized weights should give an almost similar probability to every token in 50257 tokens. In other words, the cross entropy error at the first epoch of training should be close to -log(1/50257) = 10.82490511970208 where 50257 is the number of possible tokens. By computing the cross entropy loss for the first 128 tokens (128 = 4 * 32 where the number of batches = 4 and number of tokens in each batch = 32), the average error is:
 <p align="left">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/initial_loss.png" width="50%" alt="Initial Loss"/>
+<img src="https://github.com/ghafeleb/GPT-2/blob/main/images/initial_loss.png" width="50%" alt="Initial Loss"/>
   <br>
   <em></em>
 </p>
@@ -116,9 +116,10 @@ To train the model using tiny Shakespeare play data, run the following command:
 cd train
 !python train_gpt2_test.py --train --data_type super_tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
 ```
-By running on cuda, you can have much faster trianing. You can see the walltime of cpu vs. cuda on my device here:
+By running on GPU (H100), you can have much faster training. You can see the runtime of GPU is almost **18X** faster than CPU:
+
 <p align="center">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/cpu_vs_gpu.png" width="85%" alt="CPU vs. GPU"/>
+<img src="https://github.com/ghafeleb/GPT-2/blob/main/images/cpu_vs_gpu.png" width="85%" alt="CPU vs. GPU"/>
   <br>
   <em></em>
 </p>
@@ -149,7 +150,7 @@ cd train
 ```
 You can see the runtime per epoch in the following screenshot:
 <p align="left">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/H100_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+<img src="https://github.com/ghafeleb/GPT-2/blob/main/images/H100_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
   <br>
   <em></em>
 </p>
@@ -164,7 +165,7 @@ cd train
 ```
 You can see the runtime per epoch in the following screenshot:
 <p align="left">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/H100_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+<img src="https://github.com/ghafeleb/GPT-2/blob/main/images/H100_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
   <br>
   <em></em>
 </p>
@@ -180,7 +181,7 @@ cd train
 ```
 You can see the runtime per epoch in the following screenshot:
 <p align="left">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/H100_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+<img src="https://github.com/ghafeleb/GPT-2/blob/main/images/H100_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
   <br>
   <em></em>
 </p>
@@ -196,7 +197,7 @@ cd train
 ```
 You can see the runtime per epoch in the following screenshot:
 <p align="left">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/H100_FA_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+<img src="https://github.com/ghafeleb/GPT-2/blob/main/images/H100_FA_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
   <br>
   <em></em>
 </p>
@@ -212,7 +213,7 @@ cd train
 ```
 You can see the runtime per epoch in the following screenshot:
 <p align="left">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/H100_goodNum_FA_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+<img src="https://github.com/ghafeleb/GPT-2/blob/main/images/H100_goodNum_FA_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
   <br>
   <em></em>
 </p>
@@ -234,12 +235,10 @@ cd train
 ```
 You can see the runtime per epoch in the following screenshot:
 <p align="left">
-<img src="https://github.com/ghafeleb/gpt-2/blob/main/images/H100_goodNum_FA_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
+<img src="https://github.com/ghafeleb/GPT-2/blob/main/images/H100_goodNum_FA_bf16_tf32_b16_t1024_runtime.png" width="50%" alt="CPU vs. GPU"/>
   <br>
   <em></em>
 </p>
-
-As we can observe, the runtime does not change due to compared to the previous step.
 
 
 ## Future Work
