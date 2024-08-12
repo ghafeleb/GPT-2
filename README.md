@@ -116,7 +116,8 @@ To train the model using tiny Shakespeare play data, run the following command:
 cd train
 !python train_gpt2_test.py --train --data_type super_tiny_shakespear --lr 3e-4 --optimizer adam --epochs 50 --device cuda
 ```
-By running on cuda, you can have much faster trianing. You can see the walltime of cpu vs. cuda on my device here:
+By running on GPU (H100), you can have much faster training. You can see the runtime of GPU is almost **18X** faster than CPU:
+
 <p align="center">
 <img src="https://github.com/ghafeleb/gpt-2/blob/main/images/cpu_vs_gpu.png" width="85%" alt="CPU vs. GPU"/>
   <br>
